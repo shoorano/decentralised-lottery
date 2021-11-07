@@ -1,9 +1,12 @@
+import pytest
 from brownie import Lottery, config, network
 from scripts.helpers import STARTING_PRICE, DECIMALS, get_eth_price_feed_address, get_account
 
 
 def test_entrance_fee():
     """tests entrance fee"""
+    if network.show_active() != "hardhat":
+        pytest.skip()
     usd_per_eth = (STARTING_PRICE  / (10 ** DECIMALS))
     expected_entrance_fee = (50 / usd_per_eth) * 10 ** 18
     account = get_account()
