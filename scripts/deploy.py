@@ -9,4 +9,4 @@ def deploy_lottery():
 
 def main():
     """runs deployment method"""
-    lottery = deploy_lottery()
+    deploy_lottery()
