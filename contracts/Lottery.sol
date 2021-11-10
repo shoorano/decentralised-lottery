@@ -11,33 +11,37 @@ contract Lottery is VRFConsumerBase, Ownable {
     using SafeMath for uint256;
     using SafeMath for int256;
 
-    
-    uint256 public randomResult;
-    address payable[] public players;
+    uint256 public randomness;
     uint256 public usdEntryFee;
-    AggregatorV3Interface internal ethUsdPriceFeed;
+    address payable[] public players;
+    address payable public lastWinner;
     enum LOTTERY_STATE {
         OPEN,
         CLOSED,
         CALCULATING_WINNER
     }
     LOTTERY_STATE public lotteryState;
+
+    AggregatorV3Interface internal ethUsdPriceFeed;
+
     bytes32 internal keyHash;
     uint256 internal fee;
+    uint256 public randomResult;
+
     event RequestedRandomness(bytes32 requestId);
 
     constructor(
         address _ethUsdPriceFeedAddress,
-        address _vrfAddress,
-        address _linkAddress,
+        address _vrfCoordinatorAddress,
+        address _linkTokenContractAddress,
         bytes32 _keyHash,
         uint256 _fee
     ) public VRFConsumerBase(
-        0xdD3782915140c8f3b190B5D67eAc6dc5760C46E9, // VRF Coordinator
-        0xa36085F69e2889c224210F603D836748e7dC0088  // LINK Token
+        _vrfCoordinatorAddress,
+        _linkTokenContractAddress
     ) {
-        keyHash = _keyHash; // 0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4; // unique identifier for the chainlink node we use
-        fee = _fee; // 0.1 * 10 ** 18;
+        keyHash = _keyHash;
+        fee = _fee;
         usdEntryFee = 50 * 1_000_000_000_000_000_000;
         ethUsdPriceFeed = AggregatorV3Interface(_ethUsdPriceFeedAddress);
         lotteryState = LOTTERY_STATE.CLOSED;
@@ -72,14 +76,25 @@ contract Lottery is VRFConsumerBase, Ownable {
     function endLottery() public onlyOwner {
         require(lotteryState != LOTTERY_STATE.CLOSED, "Cannot end the lottery as it has already ended");
         lotteryState = LOTTERY_STATE.CALCULATING_WINNER;
-    }
-
-    function getRandomNumber() public returns (bytes32 requestId) {
-        require(LINK.balanceOf(address(this)) >= fee, "Not enough LINK - fill contract with faucet");
-        return requestRandomness(keyHash, fee);
+        bytes32 requestId = requestRandomness(keyHash, fee);
     }
     
-    function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override {
-        randomResult = randomness;
+    // sets randomResult, overrides ... google this
+    function fulfillRandomness(bytes32 requestId, uint256 _randomness) internal override {
+        require(lotteryState == LOTTERY_STATE.CALCULATING_WINNER, "Not required at this time");
+        require(_randomness > 0, "random not found");
+        pickWinner(_randomness);
+    }
+
+    function pickWinner(uint256 _randomness) internal {
+        // Pick winner
+        uint256 indexOfWinner = randomness % players.length;
+        lastWinner = players[indexOfWinner];
+        // Pay winner
+        lastWinner.transfer(address(this).balance);
+        // Reset the lottery
+        players = new address payable[](0);
+        lotteryState = LOTTERY_STATE.CLOSED;
+        randomness = _randomness;
     }
 }
