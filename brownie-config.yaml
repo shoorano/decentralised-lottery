@@ -8,6 +8,9 @@ compiler:
 dotenv: .env
 networks:
   default: hardhat
+  development:
+    vrf_coordinator_key_hash: "0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4"
+    vrf_coordinator_fee: 100000000000000000
   rinkeby:
     link_token_contract_address: "0x01BE23585060835E02B77ef475b0Cc51aA1e0709"
     vrf_coordinator_contract_address: "0xb3dCcb4Cf7a26f6cf6B120Cf5A73875B7BBc655B"
@@ -30,9 +33,9 @@ networks:
     eth_usd_price_feed_address: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
   hardhat:
     vrf_coordinator_key_hash: "0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4"
-    vrf_coordinator_fee: 0.1
+    vrf_coordinator_fee: 100000000000000000
   hardhat-local:
     vrf_coordinator_key_hash: "0x6c3699283bda56ad74f6b855546325b68d482e983852a7a82979cc4807b641f4"
-    vrf_coordinator_fee: 0.1
+    vrf_coordinator_fee: 100000000000000000
 wallets:
   from_key: ${PRIVATE_KEY}
