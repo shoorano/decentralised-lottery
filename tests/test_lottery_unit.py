@@ -41,11 +41,9 @@ def test_can_enter_when_started(lottery):
     # Arrange
     deployer = get_account()
     entrant = get_account(index=1)
-    txn_start = lottery.startLottery({"from": deployer})
-    txn_start.wait(1)
+    lottery.startLottery({"from": deployer})
     # Act
-    txn_enter = lottery.enter({"from": entrant, "value": lottery.getEntranceFee()})
-    txn_enter.wait(1)
+    lottery.enter({"from": entrant, "value": lottery.getEntranceFee()})
     # Assert
     assert lottery.players(0) == entrant.address
 
@@ -57,14 +55,11 @@ def test_deployer_can_end_lottery(lottery):
     # Arrange
     deployer = get_account()
     entrant = get_account(index=1)
-    txn_start = lottery.startLottery({"from": deployer})
-    txn_start.wait(1)
-    txn_enter = lottery.enter({"from": entrant, "value": lottery.getEntranceFee()})
-    txn_enter.wait(1)
+    lottery.startLottery({"from": deployer})
+    lottery.enter({"from": entrant, "value": lottery.getEntranceFee()})
     fund_with_link(lottery)
     # Act
-    txn_end = lottery.endLottery({"from": deployer})
-    txn_end.wait(1)
+    lottery.endLottery({"from": deployer})
     # Assert
     assert lottery.lotteryState() == 2
 
@@ -77,11 +72,9 @@ def test_non_deployer_cannot_end_lottery(lottery):
     deployer = get_account()
     entrant = get_account(index=1)
     non_deployer = get_account(index=2)
-    txn_start = lottery.startLottery({"from": deployer})
-    txn_start.wait(1)
+    lottery.startLottery({"from": deployer})
     # Act
-    txn_enter = lottery.enter({"from": entrant, "value": lottery.getEntranceFee()})
-    txn_enter.wait(1)
+    lottery.enter({"from": entrant, "value": lottery.getEntranceFee()})
     fund_with_link(lottery)
     # Assert
     with pytest.raises(exceptions.VirtualMachineError):
@@ -96,13 +89,12 @@ def test_can_pick_winner_correctly(lottery):
     deployer = get_account()
     entrant_1 = get_account(index=1)
     entrant_2 = get_account(index=2)
-    players = [entrant_1.address, entrant_2.address]
-    txn_start = lottery.startLottery({"from": deployer})
-    txn_start.wait(1)
-    txn_enter_1 = lottery.enter({"from": entrant_1, "value": lottery.getEntranceFee()})
-    txn_enter_1.wait(1)
-    txn_enter_2 = lottery.enter({"from": entrant_2, "value": lottery.getEntranceFee()})
-    txn_enter_2.wait(1)
+    players = [deployer, entrant_1, entrant_2]
+    winner = players[STATIC_RNG % (len(players) - 1)]
+    winners_balance_before = winner.balance()
+    lottery.startLottery({"from": deployer})
+    lottery.enter({"from": entrant_1, "value": lottery.getEntranceFee()})
+    lottery.enter({"from": entrant_2, "value": lottery.getEntranceFee()})
     fund_with_link(lottery)
     # Act
     txn_end = lottery.endLottery({"from": deployer})
@@ -115,4 +107,6 @@ def test_can_pick_winner_correctly(lottery):
     )
     txn_end.wait(1)
     # Assert
-    assert lottery.lastWinner() == players[STATIC_RNG % (len(players) - 1)]
+    assert lottery.lastWinner() == winner
+    assert lottery.balance() == 0
+    assert winner.balance() == winners_balance_before + lottery.getEntranceFee()
