@@ -3,18 +3,18 @@ from brownie import Lottery, config, network
 from scripts.helpers import *
 
 
-def deploy_lottery():
+def deploy_lottery(new_instance=False):
     """grabs network based addresses and contract constructor args and returns lottery
     contract, deploys contract if contract object is empty"""
     account = get_account()
-    if len(Lottery) > 0:
+    if len(Lottery) > 0 and not new_instance:
         return Lottery[-1]
     return Lottery.deploy(
         get_contract("eth_usd_price_feed").address,
-        get_contract("link_token").address,
         get_contract("vrf_coordinator").address,
-        get_brownie_config_variable("vrf_coordinator_key_hash"),
+        get_contract("link_token").address,
         get_brownie_config_variable("vrf_coordinator_fee"),
+        get_brownie_config_variable("vrf_coordinator_key_hash"),
         {"from": account},
         publish_source=config["networks"][network.show_active()].get("verify", False)
     )
@@ -48,8 +48,6 @@ def end_lottery():
     sleep(60)
     print("The lottery has ended")
     print(f"The winner was: {lottery.lastWinner}")
-    
-
 
 def main():
     """runs deployment method"""

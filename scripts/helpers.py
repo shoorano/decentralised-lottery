@@ -1,4 +1,13 @@
-from brownie import MockV3Aggregator, VRFCoordinatorMock, LinkToken, interface, accounts, config, network, Contract
+from brownie import (
+    MockV3Aggregator,
+    VRFCoordinatorMock,
+    LinkToken,
+    interface,
+    accounts,
+    config,
+    network,
+    Contract
+)
 
 FORKED_LOCAL_ENVIRONMENTS = ["mainnet-fork-dev"]
 LOCAL_BLOCKCHAIN_ENVIRONMENTS = ["hardhat", "development", "hardhat-local"]
@@ -7,6 +16,12 @@ HARDHAT_HOST="http://127.0.0.1:8545/"
 DECIMALS=8
 UNIT="ether"
 INITIAL_AMOUNT=4477.85*10**8
+STATIC_RNG = 777
+CONTRACT_TO_MOCK = {
+    "eth_usd_price_feed": MockV3Aggregator,
+    "vrf_coordinator": VRFCoordinatorMock,
+    "link_token": LinkToken,
+}
 
 def get_account(index=None, id=None):
     """return account based on chain:
@@ -42,12 +57,7 @@ def get_contract(contract_name):
             brownie.network.contract.ProjectContract: The most recently deployed
             version of this contract.
     """
-    contract_to_mock = {
-        "eth_usd_price_feed": MockV3Aggregator,
-        "vrf_coordinator": VRFCoordinatorMock,
-        "link_token": LinkToken
-    }
-    contract_type = contract_to_mock[contract_name]
+    contract_type = CONTRACT_TO_MOCK[contract_name]
     if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
         if len(contract_type) <= 0:
             deploy_mocks()
@@ -69,7 +79,7 @@ def deploy_mocks(decimals=DECIMALS, initial_amount=INITIAL_AMOUNT):
     VRFCoordinatorMock.deploy(link_token.address, {"from": account})
     print("Deployed mocks")
 
-def fund_with_link(contract_address, account=None, link_token=None, amount=100000000000000000): # 0.1 link
+def fund_with_link(contract_address, account=None, link_token=None, amount=10000000000000000000): # 0.1 link
     """funds address with link token"""
     account = account if account else get_account()
     link_token = link_token if link_token else get_contract("link_token")

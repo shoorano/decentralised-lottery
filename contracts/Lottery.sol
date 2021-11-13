@@ -34,8 +34,8 @@ contract Lottery is VRFConsumerBase, Ownable {
         address _ethUsdPriceFeedAddress,
         address _vrfCoordinatorAddress,
         address _linkTokenContractAddress,
-        bytes32 _keyHash,
-        uint256 _fee
+        uint256 _fee,
+        bytes32 _keyHash
     ) public VRFConsumerBase(
         _vrfCoordinatorAddress,
         _linkTokenContractAddress
@@ -50,7 +50,7 @@ contract Lottery is VRFConsumerBase, Ownable {
     function enter() public payable {
         // $50 minimum
         require(lotteryState == LOTTERY_STATE.OPEN, "Lottery is not currently open for entrants");
-        require(msg.value > getEntranceFee(), "Sent amount is not enough ETH");
+        require(msg.value >= getEntranceFee(), "Sent amount is not enough ETH");
         players.push(msg.sender);
     }
 
@@ -77,6 +77,7 @@ contract Lottery is VRFConsumerBase, Ownable {
         require(lotteryState != LOTTERY_STATE.CLOSED, "Cannot end the lottery as it has already ended");
         lotteryState = LOTTERY_STATE.CALCULATING_WINNER;
         bytes32 requestId = requestRandomness(keyHash, fee);
+        emit RequestedRandomness(requestId);
     }
     
     // sets randomResult, overrides ... google this
